@@ -1,11 +1,7 @@
 # Chatbot
 
-A very simple terminal chatbot written in Python, built for practice.
+A very simple chatbot website built with only HTML and JavaScript, for practice.
 
 ## How to run
 
-```
-python chatbot.py
-```
-
-Type a message and press Enter. Type `bye` to quit.
+Open `index.html` in any web browser.
