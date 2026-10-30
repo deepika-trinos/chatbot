@@ -1,4 +1,5 @@
-// Module 2: show your messages in the chat and give one fixed bot reply.
+// Module 2: show your messages in the chat.
+// Module 3: the bot picks its reply based on what you typed.
 
 // Find the parts of the page we need to work with
 const chatBox = document.getElementById("chat-box");
@@ -17,6 +18,30 @@ function addMessage(text, sender) {
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
+// Decide what the bot says back to your message
+function getBotReply(text) {
+  // Make everything lowercase so "HELLO" and "hello" count as the same,
+  // and remove punctuation so "Hi!" still counts as "hi"
+  const cleaned = text.toLowerCase().replace(/[^a-z\s]/g, "");
+
+  // Split the message into separate words, e.g. "hi there" -> ["hi", "there"]
+  const words = cleaned.split(/\s+/);
+
+  // Rules are checked from top to bottom; the first one that matches wins
+  if (cleaned.includes("how are you")) {
+    return "I'm doing great, thanks for asking!";
+  }
+  if (words.includes("bye")) {
+    return "Goodbye! Have a nice day.";
+  }
+  if (words.includes("hi") || words.includes("hello")) {
+    return "Hello there! Nice to meet you.";
+  }
+
+  // None of the rules matched
+  return "Sorry, I don't understand yet.";
+}
+
 // Runs when you click Send or press Enter
 chatForm.addEventListener("submit", function (event) {
   // Stop the browser from reloading the page
@@ -32,5 +57,5 @@ chatForm.addEventListener("submit", function (event) {
   addMessage(text, "user");
   userInput.value = "";
 
-  addMessage("Hello! I'm a bot.", "bot");
+  addMessage(getBotReply(text), "bot");
 });
