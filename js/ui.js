@@ -1,9 +1,12 @@
-// Modules 2 and 4: draws messages and the history list on the page. Never saves anything.
+// Modules 2, 3 and 4: draws messages, day separators and the history list on the page. Never saves anything.
 
 const chatBox = document.getElementById("chat-box");
 
 // The "typing..." bubble while it's on screen, otherwise null
 let typingBubble = null;
+
+// The time of the last message drawn, so we know when a new day starts (null = nothing drawn)
+let lastShownTime = null;
 
 // Turns a time like 1730540120000 into "10:42"
 function formatTime(time) {
@@ -17,6 +20,11 @@ function scrollToBottom() {
 // Draws one message bubble. message is { sender, text, time },
 // and sender ("user" or "bot") picks the bubble's color and side.
 function renderMessage(message) {
+  // The first message of a day gets a label like "Today" above it
+  if (lastShownTime === null || !isSameDay(lastShownTime, message.time)) {
+    showDaySeparator(message.time);
+  }
+
   const bubble = document.createElement("div");
   bubble.className = "message " + message.sender;
   // textContent (not innerHTML) so typed text like <b> shows as plain text
@@ -25,10 +33,22 @@ function renderMessage(message) {
   const time = document.createElement("span");
   time.className = "message-time";
   time.textContent = formatTime(message.time);
+  // Hovering the time shows the full date, like "Tue 3 Nov 2026, 10:42"
+  time.title = formatFullDate(message.time);
   bubble.appendChild(time);
 
   chatBox.appendChild(bubble);
   scrollToBottom();
+
+  lastShownTime = message.time;
+}
+
+// Draws the small centered day label, like "Today" or "Sun 1 Nov"
+function showDaySeparator(time) {
+  const separator = document.createElement("div");
+  separator.className = "day-separator";
+  separator.textContent = formatDayLabel(time);
+  chatBox.appendChild(separator);
 }
 
 // The welcome bubble shown on an empty chat. It has no time and is never saved.
@@ -43,6 +63,8 @@ function showGreeting() {
 function clearMessages() {
   chatBox.replaceChildren();
   typingBubble = null;
+  // Start fresh, so the next chat drawn gets its own first separator
+  lastShownTime = null;
 }
 
 function showTyping() {

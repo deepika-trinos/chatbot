@@ -133,6 +133,16 @@ button {
   opacity: 0.7;
 }
 
+/* Day label above the first message of each day, like "Today" */
+.day-separator {
+  align-self: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  background: var(--page-bg);
+  padding: 3px 10px;
+  border-radius: 10px;
+}
+
 /* "Typing..." bubble: three dots that bounce one after another */
 .typing {
   display: flex;
@@ -355,3 +365,81 @@ button {
   cursor: not-allowed;
   background: transparent;
 }
+[1mdiff --git a/js/ui.js b/js/ui.js[m
+[1mindex d36cfa4..fd65ac5 100644[m
+[1m--- a/js/ui.js[m
+[1m+++ b/js/ui.js[m
+[36m@@ -1,10 +1,13 @@[m
+[31m-// Modules 2 and 4: draws messages and the history list on the page. Never saves anything.[m
+[32m+[m[32m// Modules 2, 3 and 4: draws messages, day separators and the history list on the page. Never saves anything.[m
+ [m
+ const chatBox = document.getElementById("chat-box");[m
+ [m
+ // The "typing..." bubble while it's on screen, otherwise null[m
+ let typingBubble = null;[m
+ [m
+[32m+[m[32m// The time of the last message drawn, so we know when a new day starts (null = nothing drawn)[m
+[32m+[m[32mlet lastShownTime = null;[m
+[32m+[m
+ // Turns a time like 1730540120000 into "10:42"[m
+ function formatTime(time) {[m
+   return new Date(time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });[m
+[36m@@ -17,6 +20,11 @@[m [mfunction scrollToBottom() {[m
+ // Draws one message bubble. message is { sender, text, time },[m
+ // and sender ("user" or "bot") picks the bubble's color and side.[m
+ function renderMessage(message) {[m
+[32m+[m[32m  // The first message of a day gets a label like "Today" above it[m
+[32m+[m[32m  if (lastShownTime === null || !isSameDay(lastShownTime, message.time)) {[m
+[32m+[m[32m    showDaySeparator(message.time);[m
+[32m+[m[32m  }[m
+[32m+[m
+   const bubble = document.createElement("div");[m
+   bubble.className = "message " + message.sender;[m
+   // textContent (not innerHTML) so typed text like <b> shows as plain text[m
+[36m@@ -31,6 +39,16 @@[m [mfunction renderMessage(message) {[m
+ [m
+   chatBox.appendChild(bubble);[m
+   scrollToBottom();[m
+[32m+[m
+[32m+[m[32m  lastShownTime = message.time;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m// Draws the small centered day label, like "Today" or "Sun 1 Nov"[m
+[32m+[m[32mfunction showDaySeparator(time) {[m
+[32m+[m[32m  const separator = document.createElement("div");[m
+[32m+[m[32m  separator.className = "day-separator";[m
+[32m+[m[32m  separator.textContent = formatDayLabel(time);[m
+[32m+[m[32m  chatBox.appendChild(separator);[m
+ }[m
+ [m
+ // The welcome bubble shown on an empty chat. It has no time and is never saved.[m
+[36m@@ -45,6 +63,8 @@[m [mfunction showGreeting() {[m
+ function clearMessages() {[m
+   chatBox.replaceChildren();[m
+   typingBubble = null;[m
+[32m+[m[32m  // Start fresh, so the next chat drawn gets its own first separator[m
+[32m+[m[32m  lastShownTime = null;[m
+ }[m
+ [m
+ function showTyping() {[m
+[1mdiff --git a/style.css b/style.css[m
+[1mindex 3848616..7e19c32 100644[m
+[1m--- a/style.css[m
+[1m+++ b/style.css[m
+[36m@@ -133,6 +133,16 @@[m [mbutton {[m
+   opacity: 0.7;[m
+ }[m
+ [m
+[32m+[m[32m/* Day label above the first message of each day, like "Today" */[m
+[32m+[m[32m.day-separator {[m
+[32m+[m[32m  align-self: center;[m
+[32m+[m[32m  font-size: 12px;[m
+[32m+[m[32m  color: var(--text-muted);[m
+[32m+[m[32m  background: var(--page-bg);[m
+[32m+[m[32m  padding: 3px 10px;[m
+[32m+[m[32m  border-radius: 10px;[m
+[32m+[m[32m}[m
+[32m+[m
+ /* "Typing..." bubble: three dots that bounce one after another */[m
+ .typing {[m
+   display: flex;[m
