@@ -25,6 +25,8 @@ function renderMessage(message) {
   const time = document.createElement("span");
   time.className = "message-time";
   time.textContent = formatTime(message.time);
+  // Hovering the time shows the full date, like "Tue 3 Nov 2026, 10:42"
+  time.title = formatFullDate(message.time);
   bubble.appendChild(time);
 
   chatBox.appendChild(bubble);
