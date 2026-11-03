@@ -69,3 +69,91 @@ function hideTyping() {
     typingBubble = null;
   }
 }
+
+// --- History panel (Module 4) ---
+
+const historyList = document.getElementById("history-list");
+const historyDrawer = document.getElementById("history-drawer");
+const backdrop = document.getElementById("backdrop");
+const clearAllButton = document.getElementById("clear-all-btn");
+
+// The date shown under a chat title: "10:42" today, "Yesterday", otherwise "2 Nov"
+function formatHistoryDate(time) {
+  const date = new Date(time);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+
+  // toDateString() is like "Mon Nov 03 2026", so it ignores the time of day
+  if (date.toDateString() === today.toDateString()) {
+    return formatTime(time);
+  }
+  if (date.toDateString() === yesterday.toDateString()) {
+    return "Yesterday";
+  }
+  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
+
+// Draws one row per chat, newest first, and highlights the open one
+function renderHistory(chats, currentChatId) {
+  historyList.replaceChildren();
+
+  // Nothing to delete when there are no chats
+  clearAllButton.disabled = chats.length === 0;
+
+  if (chats.length === 0) {
+    const empty = document.createElement("li");
+    empty.className = "history-empty";
+    empty.textContent = "No chats yet";
+    historyList.appendChild(empty);
+    return;
+  }
+
+  // slice() makes a copy, so sorting doesn't change the order of the saved chats
+  const sorted = chats.slice().sort((a, b) => b.updatedAt - a.updatedAt);
+
+  for (const chat of sorted) {
+    const item = document.createElement("li");
+    item.className = "history-item";
+    // app.js reads this to know which chat was clicked
+    item.dataset.id = chat.id;
+    if (chat.id === currentChatId) {
+      item.classList.add("active");
+    }
+
+    const text = document.createElement("div");
+    text.className = "history-text";
+
+    const title = document.createElement("span");
+    title.className = "history-title";
+    // textContent (not innerHTML) so a title like <b> shows as plain text
+    title.textContent = chat.title;
+
+    const date = document.createElement("span");
+    date.className = "history-date";
+    date.textContent = formatHistoryDate(chat.updatedAt);
+
+    text.appendChild(title);
+    text.appendChild(date);
+
+    const deleteButton = document.createElement("button");
+    deleteButton.className = "delete-btn";
+    deleteButton.type = "button";
+    deleteButton.setAttribute("aria-label", "Delete chat");
+    deleteButton.textContent = "×";
+
+    item.appendChild(text);
+    item.appendChild(deleteButton);
+    historyList.appendChild(item);
+  }
+}
+
+function openDrawer() {
+  historyDrawer.classList.add("open");
+  backdrop.classList.add("open");
+}
+
+function closeDrawer() {
+  historyDrawer.classList.remove("open");
+  backdrop.classList.remove("open");
+}

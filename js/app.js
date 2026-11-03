@@ -10,6 +10,11 @@ const chatForm = document.getElementById("chat-form");
 const userInput = document.getElementById("user-input");
 const sendButton = document.getElementById("send-btn");
 const newChatButton = document.getElementById("new-chat-btn");
+const menuButton = document.getElementById("menu-btn");
+const closeDrawerButton = document.getElementById("close-drawer-btn");
+const backdropLayer = document.getElementById("backdrop");
+const historyListBox = document.getElementById("history-list");
+const clearAllBtn = document.getElementById("clear-all-btn");
 
 // All saved chats plus which one is open: { currentChatId, chats }
 let data = loadData();
@@ -63,6 +68,8 @@ function addMessage(chatId, message) {
   chat.messages.push(message);
   chat.updatedAt = message.time;
   saveData(data);
+  // The chat's date changed and it moves to the top of the history
+  refreshHistory();
 }
 
 // Redraws the chat box for the open chat (or the greeting if there isn't one)
@@ -96,6 +103,11 @@ function getCurrentChatId() {
   return data.currentChatId;
 }
 
+// Redraws the history list; called after every change to the chats
+function refreshHistory() {
+  renderHistory(getChats(), getCurrentChatId());
+}
+
 function openChat(id) {
   if (!findChat(id)) {
     startNewChat();
@@ -105,12 +117,14 @@ function openChat(id) {
   data.currentChatId = id;
   saveData(data);
   showCurrentChat();
+  refreshHistory();
 }
 
 function startNewChat() {
   data.currentChatId = null;
   saveData(data);
   showCurrentChat();
+  refreshHistory();
   userInput.focus();
 }
 
@@ -122,6 +136,7 @@ function deleteChat(id) {
     startNewChat();
   } else {
     saveData(data);
+    refreshHistory();
   }
 }
 
@@ -183,5 +198,53 @@ newChatButton.addEventListener("click", function () {
   startNewChat();
 });
 
-// On page load, show the chat that was open last time
+// --- History drawer events ---
+
+menuButton.addEventListener("click", openDrawer);
+closeDrawerButton.addEventListener("click", closeDrawer);
+backdropLayer.addEventListener("click", closeDrawer);
+
+document.addEventListener("keydown", function (event) {
+  if (event.key === "Escape") {
+    closeDrawer();
+  }
+});
+
+// One listener for the whole list (event delegation): the rows are redrawn
+// often, so instead of a listener per row we find out which row was clicked.
+historyListBox.addEventListener("click", function (event) {
+  const item = event.target.closest(".history-item");
+
+  // A click on "No chats yet" or on empty space
+  if (!item) {
+    return;
+  }
+
+  const id = item.dataset.id;
+
+  // The × button: check it first and return, so the chat isn't opened too
+  if (event.target.closest(".delete-btn")) {
+    if (confirm("Delete this chat?")) {
+      deleteChat(id);
+    }
+    // The drawer stays open so more chats can be deleted
+    return;
+  }
+
+  openChat(id);
+  closeDrawer();
+});
+
+clearAllBtn.addEventListener("click", function () {
+  if (!confirm("Delete all chats? This can't be undone.")) {
+    return;
+  }
+
+  data.chats = [];
+  // startNewChat() saves the now-empty list and redraws the history
+  startNewChat();
+});
+
+// On page load, show the chat that was open last time and the history list
 showCurrentChat();
+refreshHistory();

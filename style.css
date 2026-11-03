@@ -348,3 +348,10 @@ button {
 #clear-all-btn:hover {
   background: #fde8e8;
 }
+
+/* Greyed out when there are no chats to delete */
+#clear-all-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: transparent;
+}
