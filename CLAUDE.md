@@ -59,10 +59,26 @@ Saved under the `localStorage` key `chatbot-data`:
 
 - `storage.js`: `loadData()`, `saveData(data)`
 - `bot.js`: `getReply(text)` - first matching rule in `botRules` wins; keywords
-  match whole words/phrases after lowercasing and removing punctuation. Falls
-  back to a random entry of `fallbackReplies`. A rule has either `reply: "..."`
-  or `replies: [...]` (picked at random by `pickReply(rule)` /
-  `pickRandom(list)`). To teach the bot something, add a rule.
+  match whole words/phrases after lowercasing and removing punctuation. A rule
+  has either `keywords` or `pattern: /regex/` (tested against the same cleaned
+  text). Falls back to a random entry of `fallbackReplies`. A rule has
+  `replyFn: function`, `replies: [...]` or `reply: "..."`, checked in that
+  order by `pickReply(rule, match)`, which passes a pattern's match result to
+  `replyFn(match)`. `pickRandom(list)` remembers its last pick per list (in
+  `lastPicks`) so it never repeats the same item twice in a row. The top three
+  rules handle the name: `forgetName()` ("forget my name") clears it,
+  `getNameReply()` answers "what is my name", and `rememberName(match)`
+  ("my name is X"/"call me X"/"i am X"/"im X") stores up to two capitalised
+  words in `userName` (this page load only, never saved). Words in `notNames`
+  (e.g. "fine", "later", "here") are never taken as a name, via the
+  `nameWord` regex piece, so "im fine" falls through to the next rules.
+  `getMathsReply(match)` does "12 plus 5"/minus/times/x/multiplied by/divided
+  by (above the time rule), echoing the user's word ("6 x 7 is 42."). Other
+  rules answer the time (`getTimeReply()`), the date (`getDateReply()`) and
+  jokes (from `jokes`); "hi" uses `getGreetingReply()`, which adds `userName`
+  to a pick from `greetingReplies` ("Hello there! Nice to meet you." becomes
+  "Hello there, X! Nice to see you again."). To teach the bot something, add
+  a rule.
 - `ui.js`: `renderMessage(message)`, `showGreeting()` (welcome bubble, never
   saved), `clearMessages()`, `showTyping()`, `hideTyping()`, `formatTime(time)`,
   `renderHistory(chats, currentChatId)` (sorts a copy newest first, marks the
