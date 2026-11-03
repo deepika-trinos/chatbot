@@ -31,6 +31,14 @@ function renderMessage(message) {
   scrollToBottom();
 }
 
+// The welcome bubble shown on an empty chat. It has no time and is never saved.
+function showGreeting() {
+  const bubble = document.createElement("div");
+  bubble.className = "message bot";
+  bubble.textContent = "Hello! Type a message to start chatting.";
+  chatBox.appendChild(bubble);
+}
+
 // Removes every bubble, e.g. before showing a different chat
 function clearMessages() {
   chatBox.replaceChildren();
