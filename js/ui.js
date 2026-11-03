@@ -70,6 +70,36 @@ function hideTyping() {
   }
 }
 
+// True if a and b (time numbers or Dates) are on the same calendar day.
+// toDateString() is like "Mon Nov 03 2026", so it ignores the time of day
+function isSameDay(a, b) {
+  return new Date(a).toDateString() === new Date(b).toDateString();
+}
+
+// The label for a day: "Today", "Yesterday", otherwise "Sun 1 Nov"
+function formatDayLabel(time) {
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+
+  if (isSameDay(time, today)) {
+    return "Today";
+  }
+  if (isSameDay(time, yesterday)) {
+    return "Yesterday";
+  }
+  return new Date(time).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+}
+
+// The full date and time, like "Tue 3 Nov 2026, 10:42"
+function formatFullDate(time) {
+  const date = new Date(time);
+  // The weekday is added on its own, because with a year en-GB puts a comma after it ("Tue, 3 Nov")
+  const weekday = date.toLocaleDateString("en-GB", { weekday: "short" });
+  const day = date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  return weekday + " " + day + ", " + formatTime(time);
+}
+
 // --- History panel (Module 4) ---
 
 const historyList = document.getElementById("history-list");
@@ -79,19 +109,17 @@ const clearAllButton = document.getElementById("clear-all-btn");
 
 // The date shown under a chat title: "10:42" today, "Yesterday", otherwise "2 Nov"
 function formatHistoryDate(time) {
-  const date = new Date(time);
   const today = new Date();
   const yesterday = new Date();
   yesterday.setDate(today.getDate() - 1);
 
-  // toDateString() is like "Mon Nov 03 2026", so it ignores the time of day
-  if (date.toDateString() === today.toDateString()) {
+  if (isSameDay(time, today)) {
     return formatTime(time);
   }
-  if (date.toDateString() === yesterday.toDateString()) {
+  if (isSameDay(time, yesterday)) {
     return "Yesterday";
   }
-  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  return new Date(time).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
 // Draws one row per chat, newest first, and highlights the open one
