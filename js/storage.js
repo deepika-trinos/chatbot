@@ -10,18 +10,21 @@ function emptyData() {
 
 // Returns the saved { currentChatId, chats } object
 function loadData() {
-  const saved = localStorage.getItem(STORAGE_KEY);
-
-  if (saved === null) {
-    return emptyData();
-  }
-
-  // JSON.parse throws an error if the saved text is broken, so catch it
+  // getItem throws if the browser blocks storage, and JSON.parse throws
+  // if the saved text is broken, so catch both
   try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+
+    if (saved === null) {
+      return emptyData();
+    }
+
     const data = JSON.parse(saved);
 
     // Make sure it really looks like our data before using it
     if (data && Array.isArray(data.chats)) {
+      // Drop any chat without a messages list, so drawing it can't crash
+      data.chats = data.chats.filter(chat => chat && Array.isArray(chat.messages));
       return data;
     }
   } catch (error) {
@@ -31,7 +34,13 @@ function loadData() {
   return emptyData();
 }
 
-// localStorage can only hold text, so turn the object into JSON first
+// localStorage can only hold text, so turn the object into JSON first.
+// If saving fails (storage full or blocked), the chat keeps working,
+// it just isn't saved.
 function saveData(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (error) {
+    console.warn("Chats could not be saved.", error);
+  }
 }

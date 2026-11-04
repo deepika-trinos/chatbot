@@ -53,7 +53,10 @@ Saved under the `localStorage` key `chatbot-data`:
 - `id` is `String(Date.now())`; `time`/`updatedAt` are `Date.now()` numbers.
 - A chat is only created when its first message is sent, so empty chats are
   never saved. Its `title` is that first message, cut to 30 characters + "...".
-- `loadData()` falls back to empty data if the saved JSON is missing or broken.
+- `loadData()` falls back to empty data if the saved JSON is missing or broken
+  (or storage is blocked), and drops any chat without a `messages` array.
+- `saveData()` catches errors (storage full or blocked) and only warns in the
+  console, so the chat keeps working unsaved instead of freezing.
 
 ## Main functions
 
@@ -80,14 +83,21 @@ Saved under the `localStorage` key `chatbot-data`:
   "Hello there, X! Nice to see you again."). To teach the bot something, add
   a rule.
 - `ui.js`: `renderMessage(message)`, `showGreeting()` (welcome bubble, never
-  saved), `clearMessages()`, `showTyping()`, `hideTyping()`, `formatTime(time)`,
+  saved), `clearMessages()` (also resets `lastShownTime`), `showTyping()`,
+  `hideTyping()`, `formatTime(time)`. `renderMessage` draws a `.day-separator`
+  via `showDaySeparator(time)` whenever the message's day differs from
+  `lastShownTime`; the label comes from `formatDayLabel(time)` ("Today",
+  "Yesterday", else e.g. "Sun 1 Nov"), and hovering a message time shows
+  `formatFullDate(time)` ("Tue 3 Nov 2026, 10:42"). `isSameDay(a, b)` compares
+  calendar days.
   `renderHistory(chats, currentChatId)` (sorts a copy newest first, marks the
   open chat `.active`, shows "No chats yet" and disables Clear all when empty),
   `formatHistoryDate(time)` (time today, "Yesterday", else e.g. "2 Nov"),
   `openDrawer()`, `closeDrawer()`
 - `app.js`: `getChats()`, `getCurrentChatId()`, `openChat(id)`,
   `startNewChat()`, `deleteChat(id)`, `addMessage(chatId, message)`,
-  `showCurrentChat()`, `refreshHistory()`
+  `showCurrentChat()`, `refreshHistory()`, `checkForNewDay()` (redraws the open
+  chat and the history if the date differs from `shownDay`, else does nothing)
 
 `addMessage`, `openChat`, `startNewChat` and `deleteChat` each save and call
 `refreshHistory()`, so the history list stays in sync after every change.
@@ -106,6 +116,11 @@ Saved under the `localStorage` key `chatbot-data`:
   also opens the chat. The drawer stays open after a delete and closes after
   opening a chat. Escape, the backdrop and `#close-drawer-btn` close it.
 - Deleting the open chat (or Clear all) calls `startNewChat()`.
+- Once a minute (`DAY_CHECK_DELAY`) the page checks the date, and on a new day
+  it redraws the open chat and the history list, so "Today"/"Yesterday" stay
+  right without a reload. The typing bubble and late replies still work. Sending
+  a message also calls `checkForNewDay()` first, so a message sent just after
+  midnight never gets a second "Today" separator.
 - User text and titles are always set with `textContent`, never `innerHTML`.
 
 ## Code style

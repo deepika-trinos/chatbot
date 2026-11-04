@@ -1,7 +1,11 @@
-// Modules 2-4: connects storage, bot and ui, and handles clicks and the current chat.
+// Modules 2-4: connects storage, bot and ui, handles clicks and the current chat,
+// and redraws the day labels when the date changes.
 
 // How long the bot "types" before its reply appears, in milliseconds
 const BOT_TYPING_DELAY = 600;
+
+// How often we check whether the date has changed, in milliseconds (once a minute)
+const DAY_CHECK_DELAY = 60000;
 
 // Chat titles longer than this are cut short and end with "..."
 const TITLE_LENGTH = 30;
@@ -21,6 +25,9 @@ let data = loadData();
 
 // The id of the chat the bot is typing a reply for, otherwise null
 let typingChatId = null;
+
+// The day the page is showing, like "Wed Nov 04 2026"
+let shownDay = new Date().toDateString();
 
 // Every message is stored as one of these objects
 function createMessage(sender, text) {
@@ -140,6 +147,21 @@ function deleteChat(id) {
   }
 }
 
+// After midnight, redraws the open chat and the history so "Today",
+// "Yesterday" and the dates are right again. Does nothing on the same day.
+function checkForNewDay() {
+  const today = new Date().toDateString();
+  if (today === shownDay) {
+    return;
+  }
+
+  shownDay = today;
+  // showCurrentChat() clears the old separators first and brings back
+  // the typing dots if the bot is still replying in this chat
+  showCurrentChat();
+  refreshHistory();
+}
+
 // --- Events ---
 
 // Runs when you click Send or press Enter
@@ -153,6 +175,10 @@ chatForm.addEventListener("submit", function (event) {
   if (text === "" || sendButton.disabled) {
     return;
   }
+
+  // If midnight passed since the last check, fix the old "Today" label
+  // first, so this message doesn't get a second "Today" above it
+  checkForNewDay();
 
   // The first message of a new chat creates the chat and removes the greeting
   let chat = findChat(data.currentChatId);
@@ -248,3 +274,6 @@ clearAllBtn.addEventListener("click", function () {
 // On page load, show the chat that was open last time and the history list
 showCurrentChat();
 refreshHistory();
+
+// Once a minute, check whether midnight has passed while the page was open
+setInterval(checkForNewDay, DAY_CHECK_DELAY);
